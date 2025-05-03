@@ -219,11 +219,12 @@ void handle_client(int client_socket) {
             make_log("Client", "DOWNLOAD", filename);
             make_log("Server", "UPLOAD", filename);
         } 
-        else if (strncmp(buffer, "exit") == 0) {
-            make_log("Client", "EXIT", NULL);
+        else if (strcmp(buffer, "exit") == 0) {
+            make_log("Client", "EXIT", "Client requested to exit");
             close(client_socket);
-            return;  
-        }else {
+            return;
+        }
+        else {
             send(client_socket, "INVALID_COMMAND", 15, 0);
         }
     }

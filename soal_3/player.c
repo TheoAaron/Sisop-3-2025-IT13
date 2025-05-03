@@ -158,14 +158,15 @@ void view_inventory(int sock) {
 }
 
 void show_battle_menu(int sock) {
-    printf("\n=== BATTLE MODE ===\n");
+    printf("\n=== BATTLE STARTED ===\n");
     
     send(sock, "GET_ENEMY", 9, 0);
     Enemy enemy;
     recv(sock, &enemy, sizeof(Enemy), 0);
     
     while (1) {
-        printf("\nEnemy Health: [");
+        printf("\nEnemy Health: \n");
+        printf("[");
         int bars = (enemy.health * 20) / enemy.max_health;
         for (int i = 0; i < 20; i++) {
             printf(i < bars ? "#" : " ");
@@ -188,6 +189,7 @@ void show_battle_menu(int sock) {
             recv(sock, &enemy, sizeof(Enemy), 0);
             
             if (result > 0) {
+                printf("\n=== REWARD ===\n", result);
                 printf("\nYou defeated the enemy and earned %d gold!\n", result);
                 printf("A new enemy appears!\n");
             } else {
@@ -268,7 +270,7 @@ int main() {
             show_battle_menu(sock);
             break;
         case 5:
-            printf("Goodbye!\n");
+            printf("You leave the dungeon but a new adventure await...\n");
             break;
         default:
             printf("Invalid choice\n");

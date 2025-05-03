@@ -1,25 +1,19 @@
-#include "shop.h"
+#include <stdio.h>
+#include <string.h>
+#include "dungeon.h"
 
-Weapon *get_weapon_list(int *count)
-{
-    static Weapon weapons[] = {
-        {"Classic", 26, 100, "Crit"},
-        {"Ghost", 30, 300, "Crit"},
-        {"Sheriff", 55, 500, "Crit"},
-        {"Frenzy", 26, 250, "Crit"},
-        {"Shorty", 24, 150, "Crit"},
-        {"Stinger", 27, 950, "Crit"},
-        {"Spectre", 26, 1600, "Crit"},
-        {"Bucky", 20, 850, "Crit"},
-        {"Judge", 34, 1850, "Crit"},
-        {"Bulldog", 35, 2050, "Crit"},
-        {"Guardian", 65, 2250, "Crit"},
-        {"Phantom", 39, 2900, "Crit"},
-        {"Vandal", 40, 2900, "Crit"},
-        {"Marshal", 101, 950, "Crit"},
-        {"Operator", 150, 4700, "Crit"},
-        {"Melee", 50, 0, "Crit"}
-    };
-    *count = sizeof(weapons) / sizeof(weapons[0]);
-    return weapons;
+Weapon weapons[MAX_WEAPONS] = {
+    {1, "Terra Blade", 50, 10, ""},
+    {2, "Flint & Steel", 150, 25, ""},
+    {3, "Kitchen Knife", 200, 35, ""},
+    {4, "Staff of Light", 120, 20, "10% Insta-Kill Chance"},
+    {5, "Dragon Claws", 300, 50, "+30% Crit Chance"}};
+
+void initialize_shop(void) {
+}
+
+Weapon *get_weapon(int id) {
+    if (id < 1 || id > MAX_WEAPONS)
+        return NULL;
+    return &weapons[id - 1];
 }

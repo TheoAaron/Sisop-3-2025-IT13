@@ -1,266 +1,200 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include "shop.h"
+#include "dungeon.h"
 
-#define FIFO_SERVER "dungeon.pipe"
+Player player = {
+    .gold = 500,
+    .equipped_weapon = "Fists",
+    .base_damage = 5,
+    .kills = 0,
+    .passive = "",
+    .inventory = {0},
+    .inventory_size = 0};
 
-Player player_data;
-
-void init_player()
-{
-    player_data.gold = 500;
-    player_data.base_damage = 10;
-    player_data.inventory_count = 1;
-    strcpy(player_data.inventory[0].name, "Wooden Sword");
-    player_data.inventory[0].damage = 10;
-    player_data.inventory[0].price = 50;
-    strcpy(player_data.inventory[0].passive, "-");
-    player_data.current_weapon = 0;
-    player_data.monsters_defeated = 0;
+Enemy generate_random_enemy(void) {
+    Enemy enemy;
+    enemy.max_health = MIN_ENEMY_HEALTH + rand() % (MAX_ENEMY_HEALTH - MIN_ENEMY_HEALTH + 1);
+    enemy.health = enemy.max_health;
+    return enemy;
 }
 
-void show_stats(char *resp)
-{
-    Weapon *w = &player_data.inventory[player_data.current_weapon];
-    sprintf(resp, "Gold: %d\nBase Damage: %d\nWeapon: %s\nPassive: %s\nMonsters Defeated: %d\n",
-            player_data.gold, player_data.base_damage, w->name, w->passive, player_data.monsters_defeated);
-}
-
-void handle_shop(char *resp)
-{
-    extern Weapon *get_weapon_list(int *count);
-    int count;
-    Weapon *list = get_weapon_list(&count);
-    strcpy(resp, "=== Shop ===\n");
-    for (int i = 0; i < count; i++)
+void send_enemy_data(int socket, Enemy *enemy) {
+    if (send(socket, enemy, sizeof(Enemy), 0) <= 0)
     {
-        char line[256];
-        sprintf(line, "%d. %s (DMG: %d, Price: %d, Passive: %s)\n", i + 1, list[i].name, list[i].damage, list[i].price, list[i].passive);
-        strcat(resp, line);
+        perror("Failed to send enemy data");
     }
 }
 
-void handle_shop_purchase(char *resp, int pid) {
-    extern Weapon* get_weapon_list(int *count);
-    int count;
-    Weapon *list = get_weapon_list(&count);
+void send_player_data(int socket, Player *player) {
+    if (send(socket, player, sizeof(Player), 0) <= 0)
+    {
+        perror("Failed to send player data");
+    }
+}
 
-    char result[1024] = "=== Shop ===\n";
-    for (int i = 0; i < count; i++) {
-        char line[256];
-        sprintf(line, "%d. %s (DMG: %d, Price: %d, Passive: %s)\n", i + 1,
-                list[i].name, list[i].damage, list[i].price, list[i].passive);
-        strcat(result, line);
+void send_inventory_data(int socket, Player *player) {
+    if (send(socket, player, sizeof(Player), 0) <= 0)
+    {
+        perror("Failed to send inventory data");
+    }
+}
+
+int calculate_damage(Player *player) {
+    int base_damage = player->base_damage;
+    int damage = base_damage * (0.8 + (rand() % 41) / 100.0);
+
+    if (check_critical_hit()) {
+        damage *= 2;
     }
 
-    strcat(result, "\nEnter weapon number to buy or 0 to cancel:\n");
-    strcpy(resp, result);
+    return damage;
+}
 
-    char buy_fifo[64];
-    sprintf(buy_fifo, "buy_input_%d.pipe", pid);
-    mkfifo(buy_fifo, 0666);
+bool check_critical_hit(void) {
+    return (rand() % 100) < 20;
+}
 
-    FILE *fr = fopen(buy_fifo, "r");
-    if (fr) {
-        char buf[16];
-        fgets(buf, sizeof(buf), fr);
-        int choice = atoi(buf);
-        fclose(fr);
-        unlink(buy_fifo);
+bool check_instant_kill(Player *player) {
+    if (strstr(player->passive, "Insta-Kill") != NULL)
+    {
+        return (rand() % 100) < 10;
+    }
+    return false;
+}
 
-        if (choice <= 0 || choice > count) {
-            strcpy(resp, "Purchase canceled.\n");
-            return;
+int handle_attack_command(int socket, Player* player, Enemy* enemy) {
+    int damage = calculate_damage(player);
+    
+    if (check_instant_kill(player)) {
+        damage = enemy->health;
+        printf("Instant kill activated!\n");
+    }
+    
+    enemy->health -= damage;
+    
+    if (enemy->health <= 0) {
+        int reward = MIN_REWARD + rand() % (MAX_REWARD - MIN_REWARD + 1);
+        player->gold += reward;
+        player->kills++;
+        *enemy = generate_random_enemy();
+        return reward;
+    }
+    
+    return -damage;
+}
+
+int handle_equip_command(int socket, int weapon_id) {
+    for (int i = 0; i < player.inventory_size; i++) {
+        if (player.inventory[i] == weapon_id) {
+            Weapon *w = get_weapon(weapon_id);
+            if (w != NULL) {
+                strncpy(player.equipped_weapon, w->name, WEAPON_NAME_LEN);
+                player.base_damage = w->damage;
+                strncpy(player.passive, w->passive, PASSIVE_LEN);
+                return 1;
+            }
         }
+    }
+    return -1;
+}
 
-        Weapon selected = list[choice - 1];
-        if (player_data.gold < selected.price) {
-            sprintf(resp, "You don't have enough gold to buy %s.\n", selected.name);
-            return;
+int handle_buy_command(int socket, int weapon_id, int player_gold) {
+    Weapon *w = get_weapon(weapon_id);
+    if (!w)
+        return -1;
+    if (player_gold < w->price)
+        return -2;
+    if (player.inventory_size >= MAX_INVENTORY)
+        return -3;
+
+    player.inventory[player.inventory_size++] = weapon_id;
+    player.gold -= w->price;
+    return 1;
+}
+
+void handle_client(int client_socket) {
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    Enemy current_enemy = generate_random_enemy();
+
+    while ((bytes_read = recv(client_socket, buffer, BUFFER_SIZE - 1, 0)) > 0) {
+        buffer[bytes_read] = '\0';
+
+        if (strncmp(buffer, "GET_STATS", 9) == 0) {
+            send_player_data(client_socket, &player);
         }
-
-        if (player_data.inventory_count >= MAX_WEAPON) {
-            strcpy(resp, "Your inventory is full!\n");
-            return;
+        else if (strncmp(buffer, "GET_INVENTORY", 13) == 0) {
+            send_inventory_data(client_socket, &player);
         }
-
-        player_data.gold -= selected.price;
-        player_data.inventory[player_data.inventory_count++] = selected;
-        sprintf(resp, "You bought %s!\n", selected.name);
-    } else {
-        strcpy(resp, "Failed to read input.\n");
-    }
-}
-
-void handle_inventory_equip(char *resp, int pid) {
-    char result[1024] = "=== Inventory ===\n";
-    if (player_data.inventory_count == 0) {
-        strcat(result, "(empty)\n");
-        strcpy(resp, result);
-        return;
-    }
-
-    for (int i = 0; i < player_data.inventory_count; i++) {
-        char line[128];
-        sprintf(line, "%d. %s (DMG: %d, Passive: %s)%s\n", i + 1,
-                player_data.inventory[i].name,
-                player_data.inventory[i].damage,
-                player_data.inventory[i].passive,
-                i == player_data.current_weapon ? " [EQUIPPED]" : "");
-        strcat(result, line);
-    }
-
-    strcat(result, "\nChoose weapon number to equip or 0 to cancel:\n");
-    strcpy(resp, result);
-
-    char input_fifo[64];
-    sprintf(input_fifo, "equip_input_%d.pipe", pid);
-    mkfifo(input_fifo, 0666);
-
-    FILE *fr = fopen(input_fifo, "r");
-    if (fr) {
-        char buf[16];
-        fgets(buf, sizeof(buf), fr);
-        int choice = atoi(buf);
-        fclose(fr);
-        unlink(input_fifo);
-
-        if (choice > 0 && choice <= player_data.inventory_count) {
-            player_data.current_weapon = choice - 1;
-            sprintf(resp, "Equipped %s.\n", player_data.inventory[choice - 1].name);
-        } else {
-            strcat(resp, "No weapon equipped.\n");
+        else if (strncmp(buffer, "GET_ENEMY", 9) == 0) {
+            send_enemy_data(client_socket, &current_enemy);
         }
-    } else {
-        strcat(resp, "Failed to read input.\n");
+        else if (strncmp(buffer, "ATTACK", 6) == 0) {
+            int result = handle_attack_command(client_socket, &player, &current_enemy);
+            send(client_socket, &result, sizeof(int), 0);
+            send_enemy_data(client_socket, &current_enemy);
+        }
+        else if (strncmp(buffer, "BUY ", 4) == 0) {
+            int weapon_id, player_gold;
+            if (sscanf(buffer + 4, "%d %d", &weapon_id, &player_gold) == 2) {
+                int result = handle_buy_command(client_socket, weapon_id, player_gold);
+                send(client_socket, &result, sizeof(int), 0);
+            }
+        }
+        else if (strncmp(buffer, "EQUIP ", 6) == 0) {
+            int weapon_id = atoi(buffer + 6);
+            int result = handle_equip_command(client_socket, weapon_id);
+            send(client_socket, &result, sizeof(int), 0);
+        }
     }
+    close(client_socket);
 }
 
-Enemy spawn_enemy() {
-    Enemy e;
-    e.max_hp = 50 + rand() % 151;
-    e.hp = e.max_hp;
-    return e;
-}
+int start_server() {
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
 
-int calculate_damage(Player *p, int *critical, int *passive_triggered) {
-    Weapon *w = &p->inventory[p->current_weapon];
-    int dmg = w->damage;
-    *critical = 0;
-    *passive_triggered = 0;
-
-    if (strcmp(w->passive, "Crit") == 0 && (rand() % 5 == 0)) {
-        dmg = (int)(dmg * 1.5);
-        *critical = 1;
-        *passive_triggered = 1;
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
 
-    return dmg;
-}
-
-void handle_battle(char *resp) {
-    Enemy e = spawn_enemy();
-    char log[512] = "";
-    sprintf(log, "Enemy appears! HP: %d\n", e.hp);
-
-    while (e.hp > 0) {
-        int critical = 0;
-        int passive_triggered = 0;
-        int dmg = calculate_damage(&player_data, &critical, &passive_triggered);
-        e.hp -= dmg;
-        if (e.hp < 0) e.hp = 0;
-
-        char turn[128];
-        sprintf(turn, "You dealt %d damage%s. Enemy HP: %d/%d\n",
-                dmg, critical ? " (CRITICAL!)" : "", e.hp, e.max_hp);
-        strcat(log, turn);
-
-        if (passive_triggered) {
-            if (critical)
-                strcat(log, "Passive activated: HEADSHOT!\n");
-            else
-                strcat(log, "Passive activated: LEGSHOT!\n");
-        }        
-
-        if (e.hp <= 0) break;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
     }
 
-    player_data.monsters_defeated++;
-    int reward = 50 + rand() % 51;
-    player_data.gold += reward;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
 
-    char reward_msg[64];
-    sprintf(reward_msg, "Enemy defeated! You gained %d gold.\n", reward);
-    strcat(log, reward_msg);
-
-    strcpy(resp, log);
-}
-
-void handle_command(const char *cmd, char *resp, int pid)
-{
-    if (strcmp(cmd, "stats") == 0)
-    {
-        show_stats(resp);
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
     }
-    else if (strcmp(cmd, "shop") == 0) {
-        handle_shop_purchase(resp, pid);
-    }
-    else if (strcmp(cmd, "inventory") == 0) {
-        handle_inventory_equip(resp, pid);
-    }
-    else if (strcmp(cmd, "battle") == 0)
-    {
-        handle_battle(resp);
-    }
-    else if (strcmp(cmd, "exit") == 0) {
-        sprintf(resp, "Player %d exited the dungeon.\n", pid);
-    }       
-    else
-    {
-        sprintf(resp, "Unknown command: %s", cmd);
-    }
-}
 
-int main()
-{
-    mkfifo(FIFO_SERVER, 0666);
-    init_player();
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
 
-    while (1)
-    {
-        FILE *fp = fopen(FIFO_SERVER, "r");
-        if (!fp)
-            continue;
+    printf("Server listening on port %d...\n", PORT);
 
-        char buffer[256];
-        if (!fgets(buffer, sizeof(buffer), fp))
+    while (1) {
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
         {
-            fclose(fp);
+            perror("accept");
             continue;
         }
-        fclose(fp);
-
-        char *pid_str = strtok(buffer, ":");
-        int pid = atoi(pid_str);
-        char *cmd = strtok(NULL, "\n");
-
-        char response[512];
-        handle_command(cmd, response, pid);
-
-        char reply_fifo[64];
-        sprintf(reply_fifo, "player_%d.pipe", pid);
-        FILE *fw = fopen(reply_fifo, "w");
-        if (fw)
-        {
-            fputs(response, fw);
-            fclose(fw);
-        }
+        handle_client(new_socket);
     }
-
     return 0;
+}
+
+int main() {
+    initialize_shop();
+    return start_server();
 }

@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,11 +80,14 @@ int main() {
     printf("Connected to server.\n");
     
     while (1) {
-        printf("\nMenu:\n");
-        printf("1. Decrypt and save file\n");
-        printf("2. Download file\n");
-        printf("3. Exit\n");
-        printf("Enter choice: ");
+        printf("\n╔══════════════════════════════╗\n");
+        printf("║          MAIN MENU          ║\n");
+        printf("╠══════════════════════════════╣\n");
+        printf("║  1. Decrypt and save file   ║\n");
+        printf("║  2. Download file           ║\n");
+        printf("║  3. Exit                    ║\n");
+        printf("╚══════════════════════════════╝\n");
+        printf("\nEnter your choice [1-3]: ");
         
         int choice;
         scanf("%d", &choice);
@@ -111,9 +115,9 @@ int main() {
                 break;
             }
             case 3:
-                send_command(sock, "exit");
-                close(sock);
-                exit(EXIT_SUCCESS);
+            send(sock, "exit", strlen("exit"), 0);
+            close(sock);
+            exit(EXIT_SUCCESS);            
             default:
                 printf("Invalid choice.\n");
         }

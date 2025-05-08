@@ -63,3 +63,49 @@ Berikut merupakan implementasi teknis dari soal ini dalam bentuk diagram:
 
 Terdapat juga error handling yang dapat digunakan ketika user memasukkan input yang tidak diinginkan.
 
+<<<<<<< HEAD
+=======
+---
+
+## Soal 3
+
+### 📌 Penjelasan Awal
+
+Pada soal ini, terdapat implementasi simpel sebuah game petualangan RPG dimana player dapat melakukan berbagai macam hal, seperti membeli equipment dan bertarung melawan monster.
+
+Sistem ini terdiri dari tiga komponen utama, yaitu:
+
+- **Server** `(dungeon.c)`: Menangani logika game, data pemain, dan generasi musuh
+
+- **Client** `(player.c)`: Menyediakan antarmuka pengguna dan berkomunikasi dengan server
+
+- **Sistem Toko** `(shop.c)`: Mengelola data senjata dan fungsionalitas toko
+
+Pada komponen-komponen utama tersebut, terdapat koneksi jaringan antar tiap-tiap komponen yang menyammbungkan kinerja ketiga komponen utama tersebut yang bernama `TCP`.
+
+`TCP` **(Transmission Control Protocol)** adalah sebuah protokol standar yang digunakan dalam komunikasi jaringan, khususnya di internet. Fungsinya adalah untuk memastikan data dikirimkan secara andal dan terurut dari satu perangkat ke perangkat lain. 
+
+`TCP` bekerja di lapisan transport dalam model referensi OSI, dan menyediakan layanan koneksi yang andal untuk aplikasi. 
+
+Contohnya pada file player.c dengan dungeon.c dimana terdapat hubungan TCP yang mempersatukan kedua file ini.
+
+### ⚙️ Fitur Utama
+
+Pada program ini, terdapat beberapa fitur utama, yaitu:
+
+1. **Show Status**: Tempat player dapat melihat status mereka yang isinya berupa gold, item yang digunakan, attack power player, dan jumlah monster yang dikalahkan oleh player.
+
+2. **Shop**: Tempat player dapat membeli senjata yang diinginkan untuk menambah attack power mereka dan mendapat pasif unik ke status mereka.
+
+3. **Show Inventory & Equip Items**: Tempat persenjataan player berada, disini player dapat melihat senjata apa saja yang mereka miliki dan menggunakan senjata tersebut.
+
+4. **Battle With Enemies**: Tempat dimana player dapat bertarung dengan banyak monster untuk mendapat koin.
+
+### 🔧 Implementasi File `dungeon.c`
+
+Pada `dungeon.c`, terdapat beberapa fitur yang bertujuan sebagai fondasi dari program ini, yaitu:
+
+- Mengelola status pemain. Pada file ini, status pemain akan diubah jika terdapat perubahan seperti penambahan gold, pergantian senjata dan attack power, dan penampilan pasif jika ada.
+
+- Membuat musuh dengan HP yang bervariasi. Dengan menggunakan fungsi `rand()` untuk menghasilkan musuh yang memiliki HP yang random dan bervariasi
+>>>>>>> 506d04c (soal_3 lapres part 1)

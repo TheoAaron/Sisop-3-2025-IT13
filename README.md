@@ -125,20 +125,21 @@ stringnya seperti :
 
 6. EQUIP: Menangani pergantian senjata
 
-Mekanik Pertarungan
+**Mekanik Pertarungan**
 Perhitungan kerusakan dengan variasi acak (80-120% dari kerusakan dasar)
 
 20% kemungkinan serangan kritis (2x kerusakan)
 
 Kemampuan khusus senjata (contoh: 10% kemungkinan membunuh instan)
 
-Komunikasi Jaringan
+**Komunikasi Jaringan**
 Server TCP yang mendengarkan di port PORT (terdefinisi di dungeon.h)
 
 Menangani beberapa client secara berurutan
 
 Menggunakan struktur data berukuran tetap untuk komunikasi
-Implementasi Client (player.c)
+
+**Implementasi Client (player.c)**
 Antarmuka Pengguna
 Menu Utama:
 Tampilkan Statistik Pemain
@@ -146,13 +147,15 @@ Toko
 Inventori & Ganti Senjata
 Bertarung
 Keluar
-Sistem Toko:
+
+**Sistem Toko:**
 Menampilkan senjata yang tersedia dengan harga dan statistik
 Menangani transaksi pembelian
 Manajemen Inventori:
 Menampilkan senjata yang dimiliki
 Memungkinkan pergantian senjata
-Sistem Pertarungan:
+
+**Sistem Pertarungan:**
 - Bar kesehatan visual untuk musuh
 - Opsi Serang/Kabur
 - Sistem hadiah untuk musuh yang dikalahkan
@@ -160,7 +163,7 @@ Sistem Pertarungan:
 - Terhubung ke server di 127.0.0.1:PORT
 - Mengirim perintah dan menerima pembaruan secara sinkron
 
-Sistem Toko (shop.c)
+**Sistem Toko (shop.c)**
 
 - Menampilkan senjata untuk dibeli
 - Initialize shop uuntuk menginfokan bahwa fungsi shop dipanggil

@@ -7,9 +7,13 @@ Memberikan pilihan :
 1. Decrypt file : Mendecrypt file.txt yang berasal dari client/secrets
 2. Download file : download file dari database
 3. exit
+
 penjelasan kode
+
 A. jika memilih 1 maka client akan mengirim sinyal ke server untuk menjalankan fungsi decrypt yang ada di server
+
 B. Jika memilih 2 maka client akan mengirim sinyal ke server untuk menjalankan fungsi download, dengan di bagian client akan melakukan perintah untuk menulis kembali file untuk disimpan di direktori client
+
 C. Jika memilih 3 maka client akan mengirim sinyal exit ke server
 
 ### fitur utama sisi server

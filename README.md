@@ -63,8 +63,6 @@ Berikut merupakan implementasi teknis dari soal ini dalam bentuk diagram:
 
 Terdapat juga error handling yang dapat digunakan ketika user memasukkan input yang tidak diinginkan.
 
-<<<<<<< HEAD
-=======
 ---
 
 ## Soal 3

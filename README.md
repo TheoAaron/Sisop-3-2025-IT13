@@ -125,7 +125,7 @@ stringnya seperti :
 
 6. EQUIP: Menangani pergantian senjata
 
-**Mekanik Pertarungan**
+**Mekanik Pertarungan:**
 
 Perhitungan kerusakan dengan variasi acak (80-120% dari kerusakan dasar)
 
@@ -133,7 +133,7 @@ Perhitungan kerusakan dengan variasi acak (80-120% dari kerusakan dasar)
 
 Kemampuan khusus senjata (contoh: 10% kemungkinan membunuh instan)
 
-**Komunikasi Jaringan**
+**Komunikasi Jaringan:**
 
 Server TCP yang mendengarkan di port PORT (terdefinisi di dungeon.h)
 
@@ -141,7 +141,7 @@ Menangani beberapa client secara berurutan
 
 Menggunakan struktur data berukuran tetap untuk komunikasi
 
-**Implementasi Client (player.c)**
+**Implementasi Client (player.c):**
 
 Antarmuka Pengguna
 Menu Utama:
@@ -168,7 +168,7 @@ Memungkinkan pergantian senjata
 - Terhubung ke server di 127.0.0.1:PORT
 - Mengirim perintah dan menerima pembaruan secara sinkron
 
-**Sistem Toko (shop.c)**
+**Sistem Toko (shop.c):**
 
 - Menampilkan senjata untuk dibeli
 - Initialize shop uuntuk menginfokan bahwa fungsi shop dipanggil

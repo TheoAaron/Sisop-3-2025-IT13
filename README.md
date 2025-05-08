@@ -103,6 +103,7 @@ Pada program ini, terdapat beberapa fitur utama, yaitu:
 
 ### 🔧 Implementasi File `dungeon.c`
 
+<<<<<<< HEAD
 Fitur Utama
 A. Mengelola status pemain seperti bagian emas, senjata, jumlah kemenangan
 
@@ -173,8 +174,83 @@ Memungkinkan pergantian senjata
 - Menampilkan senjata untuk dibeli
 - Initialize shop uuntuk menginfokan bahwa fungsi shop dipanggil
 
+=======
+>>>>>>> 803f621 (Lapres Soal 3)
 Pada `dungeon.c`, terdapat beberapa fitur yang bertujuan sebagai fondasi dari program ini, yaitu:
 
 - Mengelola status pemain. Pada file ini, status pemain akan diubah jika terdapat perubahan seperti penambahan gold, pergantian senjata dan attack power, dan penampilan pasif jika ada.
 
 - Membuat musuh dengan HP yang bervariasi. Dengan menggunakan fungsi `rand()` untuk menghasilkan musuh yang memiliki HP yang random dan bervariasi
+
+Cara kerja server untuk memproses perintah client adalah setelah user menginput opsi user, maka kita akan mengubah input tersebut menjadi sebuah string untuk dijadikan acuan pada file dungeon agar lebih mudah diolah.
+Bentukan stringnya yanng terdapat pada kode tersebut adalah:
+
+1. `GET_STATS`: Mengembalikan statistik pemain
+
+2. `GET_INVENTORY`: Mengembalikan inventori pemain
+
+3. `GET_ENEMY`: Mengembalikan data musuh saat ini
+
+4. `ATTACK`: Menangani mekanik pertarungan
+
+5. `BUY`: Memproses pembelian senjata
+
+6. `EQUIP`: Menangani pergantian senjata
+
+**Mekanik Pertarungan**
+
+- Perhitungan kerusakan dengan variasi acak (80-120% dari kerusakan dasar)
+
+- 20% kemungkinan serangan kritis (2x kerusakan)
+
+- Kemampuan khusus senjata (contoh: 10% kemungkinan membunuh instan)
+
+**Komunikasi Jaringan**
+- Server TCP yang mendengarkan di port PORT (terdefinisi di dungeon.h)
+
+- Menangani beberapa client secara berurutan
+
+- Menggunakan struktur data berukuran tetap untuk komunikasi
+
+### 🔧 Implementasi Client `(player.c)`
+
+Berikut adalah fitur-fitur yang terdapat pada program ini:
+- Antarmuka Pengguna
+
+- Menu Utama:
+    1. Tampilkan Statistik Pemain
+    2. Toko
+    3. Inventori & Ganti Senjata
+    4. Bertarung
+    5. Keluar
+
+Adapun tampilan sistem toko pada program ini yang berguna untuk:
+
+- **Menampilkan senjata yang tersedia dengan harga dan statistik**
+
+- **Menangani transaksi pembelian**
+
+- **Manajemen Inventori**: Menampilkan senjata yang dimiliki
+- **Memungkinkan pergantian senjata**
+
+Pada file ini, sistem pertarungan berfungsi untuk:
+
+- Bar kesehatan visual untuk musuh
+
+- Opsi Serang/Kabur
+
+- Sistem hadiah untuk musuh yang dikalahkan
+
+- Komunikasi Jaringan
+
+- Terhubung ke server di 127.0.0.1:PORT
+
+- Mengirim perintah dan menerima pembaruan secara sinkron
+
+### 🔧 Sistem Toko `(shop.c)`
+
+FIle `shop.c` hanya berfungsi untuk menampilkan dan menyimpan senjata-senjata yang dapat digunakan oleh pemain. Berikut merupakan fungsi dari file ini:
+
+- Menampilkan senjata untuk dibeli
+
+- Initialize shop uuntuk menginfokan bahwa fungsi shop dipanggil
